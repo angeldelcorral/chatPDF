@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat y Carga de Archivos</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-4/css/bootstrap.min.css') }}" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-4/css/bootstrap-theme.min.css') }}" crossorigin="anonymous">
+    <script src="{{ url_for('static', filename='bootstrap-4/js/bootstrap.min.js') }}" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/5afcdb8c55.js" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">PDF ChatBot</h1>
+        <div class="form-group">
+            <div class="input-group mb-3">
+
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="fileInput" accept=".pdf" onchange="updateFileInputLabel()">
+                    <label class="custom-file-label" for="fileInput" id="file_name" >Seleccionar archivo PDF</label>
+                </div>
+                <div class="input-group-append">
+                    <button class="btn btn-success" type="buttom" id="upload_buttom" onclick="upload_file()" disabled>Cargar PDF</button>
+                </div>
+            </div>
+            <input type="text" class="form-control" id="username" placeholder="Nombre de Usuario">
+        </div>
+        <div id="messages">
+            <!-- Aquí se mostrarán los mensajes del chat -->
+        </div>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" id="message" placeholder="Escribe un mensaje" onkeypress="pressEnter(event)">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button" onclick="sendMessage()">Enviar <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><style>svg{fill:#ffffff}</style><path d="M16.1 260.2c-22.6 12.9-20.5 47.3 3.6 57.3L160 376V479.3c0 18.1 14.6 32.7 32.7 32.7c9.7 0 18.9-4.3 25.1-11.8l62-74.3 123.9 51.6c18.9 7.9 40.8-4.5 43.9-24.7l64-416c1.9-12.1-3.4-24.3-13.5-31.2s-23.3-7.5-34-1.4l-448 256zm52.1 25.5L409.7 90.6 190.1 336l1.2 1L68.2 285.7zM403.3 425.4L236.7 355.9 450.8 116.6 403.3 425.4z"/></svg></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlBaseApi = 'http://localhost:5000/';
+        if (!localStorage.getItem('my_id') || localStorage.getItem('my_id') == 'undefined') {
+            console.log('La variable mi_id no está seteada en el localStorage. Ejecutar función...');
+            function getUniqueId() {
+                console.log('La función se ejecutó porque mi_id no está seteada.');
+                const url = urlBaseApi + 'get_user_id'
+                fetch(url)
+                .then(resp => resp.json()) // Convertir la respuesta a JSON
+                .then(resp => {
+                    // console.log('Datos recibidos:', resp.data);
+                    localStorage.setItem("my_id", resp.data.user_id)
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+                getUniqueId();
+            }
+
+        function updateFileInputLabel() {
+            let buttom = document.getElementById('upload_buttom');
+            buttom.disabled = false;
+            let input = document.getElementById('fileInput');
+            let label = document.getElementById('file_name');
+            label.innerHTML = input.files[0].name;
+        }
+
+        function upload_file() {
+            let file = document.getElementById('fileInput').files[0];
+            let formData = new FormData();
+            let apiURL = urlBaseApi + 'upload_file';
+            formData.append('file', file);
+            fetch(apiURL, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    let upload_button = document.getElementById('upload_buttom');
+                    upload_button.disabled = true;
+                    alert('Archivo cargado exitosamente');
+                } else {
+                    alert('Ocurrió un error al cargar el archivo');
+                }
+            });
+        }
+
+
+        function sendMessage() {
+            let message = document.getElementById('message').value;
+            let username = document.getElementById('username').value;
+            if (username.length === 0) {
+                username = "Tú";
+            } 
+            if (message == '' || message.length == 0) {
+                alert('El mensaje esta vacio');
+                return false;
+            }
+            let my_id = localStorage.getItem('my_id');
+            
+            let data = {
+                'message': message,
+                'user_id': my_id,
+                'user_name': username
+            };
+            public_messages(data);
+            let urlApi = urlBaseApi + "send_question";
+            fetch(urlApi, {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers:{
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Mensaje enviado exitosamente');
+                } else {
+                    console.log('Ocurrió un error al enviar el mensaje');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Respuesta del servidor:', data);
+                public_messages(data.data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+            // Clear input field after sending the message to server and reloading page for demo purposes only!
+            document.getElementById('message').value = '';
+        }
+
+        
+        function public_messages(data) {
+            let messages = document.getElementById('messages');
+            let user_id = data.user_id;
+            let user_name = data.user_name;
+            let message = data.message;
+            let date = new Date();
+            let time =  date.toLocaleString("es-CL", {
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                        });
+            let end_html = `<p><strong><u>${user_name}</u></strong>: <small><em>${time}</em><small></p><h3 class="alert-heading">${message}</h5></div>`;
+            let init_html = '';
+            if (user_id !== '1'){
+                init_html += '<div class="alert alert-success recipient" role="alert">';
+                // messages.innerHTML += '<div class="alert alert-success recipient" role><p>You :  </p> <span>' + data.message + '</span></div>';
+            }else{
+                init_html += '<div class="alert alert-primary sender" role="alert">';
+                // messages.innerHTML += `<div class="alert alert-primary sender"><p>${data.user_name} : </p>  <span>`+ data.message + '</span></div>';
+            }
+            messages.innerHTML += init_html + end_html;
+        }
+
+        function pressEnter(e) {
+            if (e.code === "Enter") {
+                e.preventDefault();
+                sendMessage()
+            }
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
