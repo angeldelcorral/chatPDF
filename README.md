@@ -7,6 +7,10 @@ install requirements
 
 pip install -r requirements.txt
 
+in the file common/.env 
+you set your api key from open ai
+
+
 execute 
 python app.py
 
