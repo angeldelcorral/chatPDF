@@ -6,9 +6,9 @@ from flask import Flask, render_template, jsonify, request
 from flask_cors import cross_origin
 from copy import deepcopy
 
-from views import manage_user
-from views import admin_files
-from views import chat_instance
+from .views import manage_user
+from .views import admin_files
+from .views import chat_instance
 
 # constants
 from common.config import ALLOWED_ORIGINS, TIMEZONE
