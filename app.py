@@ -14,7 +14,6 @@ from views import chat_instance
 from common.config import ALLOWED_ORIGINS, TIMEZONE
 
 app = Flask(__name__)
-# socketio = SocketIO(app)
 
 
 LOCAL_TIMEZONE = pytz.timezone(TIMEZONE)
@@ -58,5 +57,4 @@ def index():
     return render_template('index2.html') 
 
 if __name__ == '__main__':
-    # socketio.run(app)
     app.run(debug=True)
