@@ -55,7 +55,7 @@ def get_uuid():
 
 @app.route('/')
 def index():
-    return render_template('index2.html')
+    return render_template('index2.html') 
 
 if __name__ == '__main__':
     # socketio.run(app)
