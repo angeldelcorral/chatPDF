@@ -1,14 +1,12 @@
+# *.* coding: utf-8 *.*
+
 import pytz
-
-from datetime import datetime, timezone
-from flask import Flask, render_template, jsonify, request
-# from flask_socketio import SocketIO, send, emit
-from flask_cors import cross_origin
 from copy import deepcopy
+from flask import Flask, render_template, request
+from flask_cors import cross_origin
 
-from .views import manage_user
-from .views import admin_files
-from .views import chat_instance
+# views
+from views import admin_files, manage_user, chat_instance
 
 # constants
 from common.config import ALLOWED_ORIGINS, TIMEZONE
